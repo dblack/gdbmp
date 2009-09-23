@@ -1,0 +1,9 @@
+GDBMP -- a subclass of GDBM allowing for keys and values of classes other than
+strings. 
+
+David A. Black
+September 2009
+
+See lib/gdbmp.rb for RDoc documentation. 
+
+
