@@ -1,6 +1,8 @@
 # GDBMP -- GDBM with some class-recognition intelligence
 #
-# David A. Black
+# by David A. Black
+# and incorporating a major implementation suggestion from Aaron Patterson
+#
 # September 2009
 #
 # Copyright (c) 2009, Ruby Power and Light, LLC
@@ -13,9 +15,9 @@
 #
 # GDBMP (and in all seriousness, I can't remember why I chose "P") is a subclass
 # of Ruby's GDBM class, adding the ability to save keys and values that are of
-# other classes than String. It does this by saving a class name along with the
-# keys and values and, on retrieval, performing the necessary conversions to
-# recognize the keys and prepare the values. 
+# other classes than String. It does this using Marshal. (This was not the
+# original way; it was a modification suggested by Aaron Patterson. See History,
+# below.) 
 #
 # Examples:
 #
@@ -23,13 +25,6 @@
 #   g[:abc] = 1.2
 #   g[123] = "hi"
 #   g[1.23] = :symbol
-#
-# At this point, the actual entries in the database are:
-#
-#   [["Fixnum:123", "String:hi"], ["Symbol:abc", "Float:1.2"],
-#    ["Float:1.23", "Symbol:symbol"]]
-#
-# When you retrive the values, though, the conversions are taken care of:
 #
 #   p g[:abc]   # => 1.2
 #   p g[123]    # => "hi"
@@ -65,26 +60,23 @@
 # On initialization, each instance of the class will pick up the class's constrained
 # keys. 
 #
-# == Unknown conversions
+# == History
 #
-# The conversion mechanism can only handle the classes that are in the
-# converters hash. If you use an object of a different class, it may well work,
-# but you'll get a warning.
+# This library grew from some experiments I was doing involving ActiveModel,
+# which is part of Rails 3.0 (currently in development). I was playing with the
+# ActiveModel API which makes it relatively easy to create entire new backends,
+# relational or otherwise, for ActiveRecord. 
 #
-# For example:
+# Aside from just getting GDBM to deal with things other than strings, the main
+# issue was the need to register specific classes with specific keys -- which
+# became constrain_key. 
 #
-#   obj = Object.new
-#   g[obj] = 123
-#     Warning: can't convert Object; treating as string
-#
-# Now you'll have this entry in the database:
-#
-#   ["Object:#<Object:0x240798>", "Fixnum:123"]
-#
-# You can retrieve the key using <tt>obj</tt>, but only because <tt>obj</tt>
-# supplies the same string both times it's "prepped" by GDBMP. So it kind of
-# works by coincidence. In general, it's probably best to stick to the four
-# classes for which converters are provided.
+# Originally I was doing the data storage and conversion by saving names of
+# classes to the database along with the data. Aaron Patterson suggested using
+# Marshal instead. The problem I saw at first was that there was still a need to
+# do the key constraining by class. However... that kind of solved itself, since
+# as long as the data is marshaled in the correct class, it will be saved and
+# retrieved in the correct class. 
 
 require 'gdbm'
 
@@ -144,17 +136,18 @@ private
 
 # Take a prepped string ("Symbol:abc") and convert the value based on the class. 
   def convert(string)
-    vclass, val = string.split(':', 2)
-    CONVERTERS[vclass].call(val)
+ #   vclass, val = string.split(':', 2)
+ #   CONVERTERS[vclass].call(val)
+    Marshal.load(string)
   end
 
 # Turn (e.g.) 123 into "Fixnum:123". Warn if the object's class doesn't have a
 # built-in converter. 
   def prep(obj)
-    obj_class = obj.class.to_s
-    unless CONVERTERS[obj_class]
-      warn "Warning: can't convert #{obj_class}; treating as string"
-    end
-    "#{obj.class}:#{obj}"
+  #  obj_class = obj.class.to_s
+  #  unless CONVERTERS[obj_class]
+  #    warn "Warning: can't convert #{obj_class}; treating as string"
+  #  end
+    Marshal.dump(obj)
   end
 end

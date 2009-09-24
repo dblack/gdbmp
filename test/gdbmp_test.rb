@@ -77,27 +77,6 @@ class GDBMPTest < Test::Unit::TestCase
     assert_equal(:"123", @g[:def])
   end
 
-  def test_warn_on_unconvertible_key
-    s = StringIO.new
-    $stderr = s
-    obj = Object.new
-    @g[obj] = 1
-    assert_match(/Warning.*Object/, s.string)
-    s.rewind
-    @g[obj]
-    assert_match(/Warning.*Object/, s.string)
-    $stderr = STDERR
-  end
-
-  def test_warn_on_unconvertible_value
-    s = StringIO.new
-    $stderr = s
-    obj = Object.new
-    @g[1] = obj
-    assert_match(/Warning.*Object/, s.string)
-    $stderr = STDERR
-  end
-
   def test_class_level_constrained_keys
     child = Class.new(GDBMP)
     child.constrain_key(:age, Fixnum)
