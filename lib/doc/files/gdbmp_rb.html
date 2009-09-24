@@ -56,7 +56,7 @@
     </tr>
     <tr class="top-aligned-row">
       <td><strong>Last Update:</strong></td>
-      <td>Tue Sep 22 21:20:38 -0400 2009</td>
+      <td>Wed Sep 23 22:18:33 -0400 2009</td>
     </tr>
     </table>
   </div>
@@ -74,16 +74,27 @@
 class-recognition intelligence
 </p>
 <p>
-David A. Black
+by David A. Black and incorporating a major implementation suggestion from
+Aaron Patterson
+</p>
+<p>
+September 2009
+</p>
+<p>
+Copyright (c) 2009, Ruby Power and Light, LLC Released under the same
+license as Ruby.
+</p>
+<p>
+Use at your own risk.
 </p>
 <h2>Overview</h2>
 <p>
 <a href="../classes/GDBMP.html">GDBMP</a> (and in all seriousness, I
-can&#8216;t remember why I chose &quot;P&quot;) is a shim on top of
+can&#8216;t remember why I chose &quot;P&quot;) is a subclass of
 Ruby&#8216;s GDBM class, adding the ability to save keys and values that
-are of other classes than String. It does this by saving a class name along
-with the keys and values and, on retrieval, performing the necessary
-conversions to recognize the keys and prepare the values.
+are of other classes than String. It does this using Marshal. (This was not
+the original way; it was a modification suggested by Aaron Patterson. See
+History, below.)
 </p>
 <p>
 Examples:
@@ -93,25 +104,14 @@ Examples:
   g[:abc] = 1.2
   g[123] = &quot;hi&quot;
   g[1.23] = :symbol
-</pre>
-<p>
-At this point, the actual entries in the database are:
-</p>
-<pre>
-  [[&quot;Fixnum:123&quot;, &quot;String:hi&quot;], [&quot;Symbol:abc&quot;, &quot;Float:1.2&quot;],
-   [&quot;Float:1.23&quot;, &quot;Symbol:symbol&quot;]]
-</pre>
-<p>
-When you retrive the values, though, the conversions are taken care of:
-</p>
-<pre>
+
   p g[:abc]   # =&gt; 1.2
   p g[123]    # =&gt; &quot;hi&quot;
 </pre>
 <p>
 etc.
 </p>
-<h2>Binding keys to classes</h2>
+<h2>Constraining keys to classes</h2>
 <p>
 You might want to force the value for a certain key to be of a particular
 class. For example, if you get form input consisting of strings, you might
@@ -119,58 +119,51 @@ want your database to know that some of the strings should be stored as
 integers.
 </p>
 <p>
-You can do that with the bind_key method. Using this method, you register
-certain keys along with the desired classes for their values.
+You can do that with the constrain_key method. Using this method, you
+register certain keys along with the desired classes for their values.
 </p>
 <pre>
-  g.bind_key(:year, Fixnum)
+  g.constrain_key(:year, Fixnum)
   g[:year] = &quot;1999&quot;
 
   p g[:year]  # 1999 (the integer, not the string)
 </pre>
 <p>
-The class you bind a key to has to be represented in the converters hash,
-GDBMP::CONVERTERS.
+The class you constrain a key to has to be represented in the converters
+hash, GDBMP::CONVERTERS.
 </p>
 <p>
-You can also do these bindings at the class level.
+You can also add these constraints at the class level:
 </p>
 <pre>
   class Person &lt; GDBMP
-    bind_key(:age, Fixnum)
+    constrain_key(:age, Fixnum)
     # etc.
   end
 </pre>
 <p>
 On initialization, each instance of the class will pick up the
-class&#8216;s bound keys.
+class&#8216;s constrained keys.
 </p>
-<h2>Unknown conversions</h2>
+<h2>History</h2>
 <p>
-The conversion mechanism can only handle the classes that are in the
-converters hash. If you use an object of a different class, it may well
-work, but you&#8216;ll get a warning.
+This library grew from some experiments I was doing involving ActiveModel,
+which is part of Rails 3.0 (currently in development). I was playing with
+the ActiveModel API which makes it relatively easy to create entire new
+backends, relational or otherwise, for ActiveRecord.
 </p>
 <p>
-For example:
+Aside from just getting GDBM to deal with things other than strings, the
+main issue was the need to register specific classes with specific keys
+&#8212; which became constrain_key.
 </p>
-<pre>
-  obj = Object.new
-  g[obj] = 123
-    Warning: can't convert Object; treating as string
-</pre>
 <p>
-Now you&#8216;ll have this entry in the database:
-</p>
-<pre>
-  [&quot;Object:#&lt;Object:0x240798&gt;&quot;, &quot;Fixnum:123&quot;]
-</pre>
-<p>
-You can retrieve the key using <tt>obj</tt>, but only because <tt>obj</tt>
-supplies the same string both times it&#8216;s &quot;prepped&quot; by <a
-href="../classes/GDBMP.html">GDBMP</a>. So it kind of works by coincidence.
-In general, it&#8216;s probably best to stick to the four classes for which
-converters are provided.
+Originally I was doing the data storage and conversion by saving names of
+classes to the database along with the data. Aaron Patterson suggested
+using Marshal instead. The problem I saw at first was that there was still
+a need to do the key constraining by class. However&#8230; that kind of
+solved itself, since as long as the data is marshaled in the correct class,
+it will be saved and retrieved in the correct class.
 </p>
 
     </div>

@@ -88,6 +88,7 @@
       <div class="name-list">
       <a href="#M000003">[]</a>&nbsp;&nbsp;
       <a href="#M000002">[]=</a>&nbsp;&nbsp;
+      <a href="#M000004">each</a>&nbsp;&nbsp;
       <a href="#M000001">new</a>&nbsp;&nbsp;
       </div>
     </div>
@@ -148,7 +149,7 @@
       
         <div class="method-description">
           <p>
-On initialization, create the bound keys hash
+On initialization, create the constrained keys hash
 </p>
         </div>
       </div>
@@ -167,7 +168,8 @@ On initialization, create the bound keys hash
       
         <div class="method-description">
           <p>
-Retrieval.
+Retrieval. Prep the key (&quot;Symbol:abc&quot;), get the value, and
+convert it based on the class.
 </p>
         </div>
       </div>
@@ -184,8 +186,27 @@ Retrieval.
       
         <div class="method-description">
           <p>
-On setting an entry, convert if it&#8216;s a bound key. Then prep the key
-and value to make sure they have their class names.
+On setting an entry, convert the value if it&#8216;s a constrained key.
+Then prep the key and value to make sure they have their class names.
+</p>
+        </div>
+      </div>
+
+      <div id="method-M000004" class="method-detail">
+        <a name="M000004"></a>
+
+        <div class="method-heading">
+          <a href="GDBMP.src/M000004.html" target="Code" class="method-signature"
+            onclick="popupCode('GDBMP.src/M000004.html');return false;">
+          <span class="method-name">each</span><span class="method-args">() {|convert(key, convert(value))| ...}</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+GDBM objects are enumerable. This override of <a
+href="GDBMP.html#M000004">each</a> ensures that the iteration for <a
+href="GDBMP.html">GDBMP</a> respects the conversions.
 </p>
         </div>
       </div>
